@@ -1,0 +1,13 @@
+.ask-ai-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 750px;
+    margin: 0 auto;
+}
+
+.ask-ai-container input {
+    padding: 0;
+    margin: 0;
+    width: 350px;
+}
