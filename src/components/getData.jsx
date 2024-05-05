@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "./style.css";
-import { SubmitArrowIcon } from "../icons/submit-arrow-icon";
 
 const recommendations = [
     { id: 1, name: "Drama", genre: "Drama", text: "Film drama 1"},
@@ -51,10 +50,9 @@ export const GetData = () => {
         setChatHistory(updatedChatHistory);
     };
 
-    const generateRecommendation = (genre) => {
+    const generateRecommendation = (genre,response) => {
         setIsAnimating(true);
-
-        if (genre.trim() === "") {
+        /*if (genre.trim() === "") {
             const message = "I'm just an AI, I'm not capable of mind reading yet! Please provide me with some information.";
             const chars = message.split("");
             let delay = 0;
@@ -91,7 +89,47 @@ export const GetData = () => {
                 }, delay);
                 delay += 80;
             });
+        }*/
+        if (response?.detail === 'Not Found'){
+            const message = "I'm just an AI, I'm not capable of mind reading yet! Please provide me with some information.";
+            const chars = message.split("");
+            let delay = 0;
+            chars.forEach((char, index) => {
+                setTimeout(() => {
+                    saveChatHistory("User", message.substring(0, index + 1));
+                    if (index === chars.length - 1) {
+                        setIsAnimating(false);
+                    }
+                }, delay);
+                delay += 80;
+            });
         }
+        else {
+            if (response.recomandareGenuri !== 'No genres found in the text.') {
+                const recommendationTexts = response.recomandareGenuri.map(
+                    (text) => text
+                );
+                const recommendation =
+                    recommendationTexts.length > 0
+                        ? recommendationTexts.join("</br>")
+                        : "No recommendations found. Please try again with more details.";
+                console.log(recommendation)
+                const chars = recommendation.split("");
+                let delay = 0;
+                chars.forEach((char, index) => {
+                    setTimeout(() => {
+                        saveChatHistory(text, recommendation.substring(0, index + 1));
+                        if (index === recommendation.length - 1) {
+                            setIsAnimating(false);
+                            setText("");
+                        }
+                    }, delay);
+                    delay += 80;
+                });
+            }
+
+        }
+
     };
 
 
@@ -99,6 +137,18 @@ export const GetData = () => {
         localStorage.removeItem("chatHistory");
         setChatHistory([]);
     };
+
+    const onSubmit = (e) => {
+        e.preventDefault()
+        fetch(`http://127.0.0.1:8000/recommendations/${encodeURIComponent(text)}`)
+            .then((response) => response.json())
+            .then((data) => {
+                // Update your component's state or handle the recommendations data as needed
+                console.log(data);
+                generateRecommendation(text,data);
+            });
+    }
+
 
     return (
         <div className={"dark-purple-gradient"}>
@@ -118,13 +168,14 @@ export const GetData = () => {
                 <div className="chat-history-container">
                     {chatHistory.map((entry, index) => (
                         <div key={index} className="chat-entry">
-                            <div className={"chat-request"}>
-                               {entry.message}
+                            <div className="chat-request">
+                                {entry.message}
                             </div>
                             <div className="card">
                                 <div className="card-body">
                                     <p className="card-text">
-                                        <span className="typing-animation">{entry.reply}</span>
+                                        {/* Using dangerouslySetInnerHTML to parse HTML tags in reply */}
+                                        <span className="typing-animation" dangerouslySetInnerHTML={{ __html: entry.reply }}></span>
                                     </p>
                                 </div>
                             </div>
@@ -136,7 +187,7 @@ export const GetData = () => {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        generateRecommendation(text);
+                        onSubmit(e)
                         setText("");
                     }}
                 >
@@ -172,7 +223,7 @@ export const GetData = () => {
                             className={"submit-button"}
                             disabled={isAnimating}
                         >
-                            <SubmitArrowIcon/>
+                            submit
                         </button>
                     </div>
                 </form>
